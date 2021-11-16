@@ -1,0 +1,51 @@
+---
+title: "Point Source Exploration"
+author: "Iris Foxfoot"
+date: "11/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse) #for everything else. Praise the tidyverse
+library(here) #saves filepath
+library(janitor) #used for cleaning names
+library(kableExtra) #for making pretty tables
+
+options(scipen = 999) #tells R not to use scientific notation
+```
+
+```{r}
+#read in point source data for Santa Clara Watershed (from EPA ECHO database)
+point_sources <- read_csv(here("SCR_point_sources.csv")) %>% 
+  clean_names()
+```
+
+```{r}
+#look at sum of pollutants
+pollutant_summary <- point_sources %>% 
+  filter(total_pounds_lb_yr!=0) %>% 
+  group_by(pollutant_name) %>% 
+  summarise(sum = sum(total_pounds_lb_yr))
+
+#make table
+pollutant_summary %>% 
+  kbl(caption = "Total loads in pounds per year by pollutant") %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+```{r}
+#look at pollutants by location
+location_summary <- point_sources %>% 
+  filter(total_pounds_lb_yr!=0) %>%
+  group_by(facility_name) %>% 
+  summarise(pollutant_name, total_pounds_lb_yr)
+```
+
+```{r}
+#remove solids (wayyyy a lot of solids)
+location_summary_no_solids <- location_summary %>% 
+  filter(pollutant_name != "Solids, total dissolved") %>% 
+  filter(pollutant_name != "Solids, total suspended")
+```
+
